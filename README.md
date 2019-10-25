@@ -1,20 +1,20 @@
 
-# React Hobo (Hook-Based Observables)
+## React Hobo (Hook-Based Observables)
 
-## Installation
+### Installation
 
 ```
 npm i rhobo
 ```
 
-## Usage
+### Usage
 
 ```js
 import { observable, computed, useObservable, useComputed } from "rhobo";
 import type { Observable, Computed } from "rhobo";
 ```
 
-### `observable`, `useObservable`
+#### `observable`, `useObservable`
 
 ```js
 const testObservable = observable<type>(testDefaultValue);
@@ -26,7 +26,7 @@ const TestComponent = props => {
 };
 ```
 
-### `computed`, `useComputed`
+#### `computed`, `useComputed`
 
 ```js
 const TestComponent = props => {
