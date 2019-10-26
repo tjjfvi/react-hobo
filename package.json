@@ -7,7 +7,7 @@
   "scripts": {
     "test": "",
     "clean": "rimraf dist",
-    "build": "cross-env NODE_ENV=production babel --source-maps --copy-files ./src --out-dir ./dist",
+    "build": "cross-env NODE_ENV=production babel --source-maps --copy-files ./src --out-dir ./dist && flow-copy-source src dist",
     "prepublish": "npm run clean && npm run build"
   },
   "license": "ISC",
@@ -17,9 +17,9 @@
   "devDependencies": {
     "@babel/cli": "^7.6.4",
     "@babel/core": "^7.6.4",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@babel/preset-env": "^7.6.3",
     "@babel/preset-flow": "^7.0.0",
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "babel-eslint": "^10.0.3",
     "babel-plugin-add-module-exports": "^1.0.2",
     "babel-preset-minify": "^0.5.1",
@@ -28,6 +28,7 @@
     "eslint-plugin-flowtype": "^4.3.0",
     "eslint-plugin-react": "^7.16.0",
     "flow-bin": "^0.110.1",
+    "flow-copy-source": "^2.0.8",
     "rimraf": "^3.0.0"
   },
   "repository": {
