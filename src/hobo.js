@@ -105,6 +105,7 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   c.o = c;
   c.ee = o.ee;
   Object.defineProperty(c, "val", {
+    value: null,
     get(){
       return o.val;
     },
