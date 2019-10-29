@@ -5,10 +5,10 @@ import EventEmmiter from "events";
 
 let cur: ?Observable<any>;
 
-type Observable<T> = ((val?: T) => T) & _Observable<T>
-type Computed<T> = ((val?: T) => T) & _Computed<T>
+type Observable<T> = ((val?: T) => T) & ObservableClass<T>
+type Computed<T> = ((val?: T) => T) & ComputedClass<T>
 
-class _Observable<T> extends Function {
+class ObservableClass<T> extends Function {
 
     o: Observable<T>;
     val: T;
@@ -48,7 +48,7 @@ class _Observable<T> extends Function {
 
 }
 
-class _Computed<T> extends _Observable<T> {
+class ComputedClass<T> extends ObservableClass<T> {
 
   deps: Set<Observable<any>>;
 
@@ -78,7 +78,7 @@ const observable = <T/**/>(val: T): Observable<T> => {
     }
   };
   // $FlowFixMe
-  const o: Observable<T> = Object.setPrototypeOf(f, _Observable.prototype);
+  const o: Observable<T> = Object.setPrototypeOf(f, ObservableClass.prototype);
   o.o = o;
   o.val = val;
   o.ee = new EventEmmiter();
@@ -101,7 +101,7 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
       if(cur) cur.addDep(c);
       return o.val;
     }
-  }, _Computed.prototype);
+  }, ComputedClass.prototype);
   c.o = c;
   c.ee = o.ee;
   Object.defineProperty(c, "val", {
@@ -132,5 +132,5 @@ const useComputed = <T/**/>(v: () => T): Computed<T> => useValue(() => computed(
 type O<T> = Observable<T>;
 type C<T> = Computed<T>;
 
-export { observable, computed, useValue, useObservable, useComputed };
+export { observable, computed, useValue, useObservable, useComputed, ObservableClass, ComputedClass };
 export type { Observable, Computed, O, C };
