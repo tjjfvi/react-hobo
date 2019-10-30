@@ -19,12 +19,14 @@ class ObservableClass<T> extends Function {
     }
 
     use(){
+      let first = React.useRef(true);
       let [, setState] = React.useState({});
       let update = () => setState({});
-      React.useEffect(() => {
+      if(first.current) {
         this.ee.on("change", update);
-        return () => void this.ee.removeListener("change", update)
-      }, [])
+        first.current = false;
+      }
+      React.useEffect(() => () => void this.ee.removeListener("change", update), [])
       return this;
     }
 
