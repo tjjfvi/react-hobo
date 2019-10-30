@@ -133,5 +133,15 @@ const useComputed = <T/**/>(v: () => T): Computed<T> => useValue(() => computed(
 type O<T> = Observable<T>;
 type C<T> = Computed<T>;
 
-export { observable, computed, useValue, useObservable, useComputed, ObservableClass, ComputedClass };
+const observer = <I, O=*>(component: (I=>O)): (I=>O) => (input: I): O => {
+  let c = useComputed(() => {}).use();
+  c.deps.forEach(O => O.ee.removeListener("change", c.update));
+  c.deps = new Set();
+  cur = c;
+  let result = component(input);
+  cur = null;
+  return result;
+};
+
+export { observable, computed, useValue, useObservable, useComputed, ObservableClass, ComputedClass, observer };
 export type { Observable, Computed, O, C };
