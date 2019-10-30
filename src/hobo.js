@@ -117,9 +117,10 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   c.update = () => {
     c.deps.forEach(O => O.ee.removeListener("change", c.update));
     c.deps = new Set();
+    let oldCur = cur;
     cur = c;
     let v = func();
-    cur = null;
+    cur = oldCur;
     o(v);
   }
   c.update();
@@ -134,12 +135,13 @@ type O<T> = Observable<T>;
 type C<T> = Computed<T>;
 
 const observer = <I, O=*>(component: (I=>O)): (I=>O) => (input: I): O => {
-  let c = useComputed(() => {}).use();
+  let c = useComputed(() => NaN).use();
   c.deps.forEach(O => O.ee.removeListener("change", c.update));
   c.deps = new Set();
+  let oldCur = cur;
   cur = c;
   let result = component(input);
-  cur = null;
+  cur = oldCur;
   return result;
 };
 
