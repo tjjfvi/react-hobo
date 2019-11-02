@@ -1,6 +1,14 @@
 /* @flow */
 
-type M<T> = $ObjMapi<T, <K, V>(K, V)=>Computed<V>> | empty;
+type _OF<ForType, V:ForType> = V;
+type $ObjFilter<Obj, ForType>=$ObjMap<Obj, <V>(V)=>_OF<ForType, V> | empty>;
+
+type M<T> = $ObjMap<T, <V>(V)=>Computed<V>> | empty;
+
+// eslint-disable-next-line no-unused-vars
+type _F<T, I, O, F:(o: Observable<T>, ...a:I)=>O> = (...a:I)=>O;
+type _Fs<T> = $ObjFilter<T, (o: Observable<T>, ...a:Array<any>)=>any>;
+type Fs<T> = $ObjMap<_Fs<T>, <V>(V)=>_F<T, *, *, V> | empty>;
 
 import React from "react";
 import EventEmmiter from "events";
@@ -51,6 +59,7 @@ class ObservableClass<T> extends Function {
     }
 
     obs: M<T>;
+    fn: Fs<T>;
 
 }
 
@@ -100,6 +109,13 @@ const observable = <T/**/>(val: T): Observable<T> => {
       });
     }
   }): any): M<T>);
+  o.fn = ((new Proxy({}, {
+    get: (target, prop) => {
+      if(!o.val[prop])
+        return;
+      return (f => (...a) => f(o, ...a))(o.val[prop]);
+    }
+  }): any): Fs<T>);
   return o;
 }
 
@@ -122,6 +138,7 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   c._o = c;
   c.ee = o.ee;
   c.obs = o.obs;
+  c.fn = o.fn;
   // $FlowFixMe
   Object.defineProperty(c, "val", {
     get(){
