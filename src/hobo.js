@@ -121,6 +121,7 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   }, ComputedClass.prototype);
   c._o = c;
   c.ee = o.ee;
+  c.obs = o.obs;
   // $FlowFixMe
   Object.defineProperty(c, "val", {
     get(){
