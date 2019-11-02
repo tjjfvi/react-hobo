@@ -1,7 +1,7 @@
 {
   "author": "T6 <t6@t6.fyi> (https://t6.fyi/)",
   "name": "rhobo",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "main": "dist/hobo.js",
   "scripts": {
