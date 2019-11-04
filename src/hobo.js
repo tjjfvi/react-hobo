@@ -56,6 +56,17 @@ class ObservableClass<T> extends Function {
       return this.inc(-amount);
     }
 
+    tap(f: T=>any): Observable<T>{
+      f(this.val);
+      return this._o;
+    }
+
+    inn(f: $NonMaybeType<T>=>any): Observable<T>{
+      if(this.val != null)
+        f(this.val);
+      return this._o;
+    }
+
     obs: M<T>;
     fn: Fs<T>;
 
@@ -77,6 +88,16 @@ class ComputedClass<T> extends ObservableClass<T> {
 
   use(): Computed<T>{
     super.use();
+    return this._o;
+  }
+
+  tap(f: T=>any): Computed<T>{
+    super.tap(f);
+    return this._o;
+  }
+
+  inn(f: T=>any): Computed<T>{
+    super.inn(f);
     return this._o;
   }
 
