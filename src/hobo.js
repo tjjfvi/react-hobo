@@ -41,8 +41,6 @@ class ObservableClass<T> extends Function {
     }
 
     toggle(): boolean{
-      if(typeof this._o() !== "boolean")
-        throw new Error("Not a boolean");
       // $FlowFixMe
       return this.o(!this.o());
     }
