@@ -28,7 +28,7 @@ class ObservableClass<T> extends Function {
       return o;
     }
 
-    use(){
+    use(): Observable<T>{
       let first = React.useRef(true);
       let [, setState] = React.useState({});
       let update = () => setState({});
@@ -37,7 +37,7 @@ class ObservableClass<T> extends Function {
         first.current = false;
       }
       React.useEffect(() => () => void this.ee.removeListener("change", update), [])
-      return this;
+      return this._o;
     }
 
     toggle(): boolean{
@@ -73,6 +73,11 @@ class ComputedClass<T> extends ObservableClass<T> {
       return;
     o.ee.on("change", this.update);
     this.deps.add(o);
+  }
+
+  use(): Computed<T>{
+    super.use();
+    return this._o;
   }
 
 }
@@ -161,8 +166,18 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
 }
 
 const useValue = <V/**/>(v: () => V): V => React.useState(v)[0];
-const useObservable = <T/**/>(v: T): Observable<T> => useValue(() => observable(v));
-const useComputed = <T/**/>(v: () => T): Computed<T> => useValue(() => computed(v));
+type UO = <T>(T) => Observable<T>;
+const useObservable: (UO & { use: UO }) = (() => {
+  let uo = <T/**/>(v: T): Observable<T> => useValue(() => observable(v));
+  uo.use = <T/**/>(v: T): Observable<T> => uo<T>(v).use();
+  return uo;
+})();
+type UC = <T>(f: () => T, wf?: T=>any) => Computed<T>;
+const useComputed: (UC & { use: UC }) = (() => {
+  let uc = <T/**/>(f: ()=>T, wf?: T=>any): Computed<T> => useValue(() => computed(f, wf));
+  uc.use = <T/**/>(f: ()=>T, wf?: T=>any): Computed<T> => uc<T>(f, wf).use();
+  return uc;
+})();
 
 type O<T> = Observable<T>;
 type C<T> = Computed<T>;
