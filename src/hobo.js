@@ -42,7 +42,7 @@ class ObservableClass<T> extends Function {
 
     toggle(): boolean{
       // $FlowFixMe
-      return this.o(!this.o());
+      return this._o(!this._o());
     }
 
     inc(amount: number = 1): number{
