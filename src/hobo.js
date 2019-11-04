@@ -210,7 +210,11 @@ type C<T> = Comp<T>;
 
 export {
   observable,
+  obs,
+  o,
   computed,
+  comp,
+  c,
   useValue,
   useObservable,
   useObs,
