@@ -179,9 +179,6 @@ const useComputed: (UC & { use: UC }) = (() => {
   return uc;
 })();
 
-type O<T> = Observable<T>;
-type C<T> = Computed<T>;
-
 const observer = <I, O=*>(component: (I=>O)): (I=>O) => (input: I): O => {
   let c = useComputed(() => NaN).use();
   c.deps.forEach(O => O.ee.removeListener("change", c.update));
@@ -193,5 +190,36 @@ const observer = <I, O=*>(component: (I=>O)): (I=>O) => (input: I): O => {
   return result;
 };
 
-export { observable, computed, useValue, useObservable, useComputed, ObservableClass, ComputedClass, observer };
-export type { Observable, Computed, O, C };
+const useObs = useObservable;
+const useO = useObs;
+
+const useComp = useComputed;
+const useC = useComp;
+
+const obs = observable;
+const o = obs;
+
+const comp = computed;
+const c = comp;
+
+type Obs<T> = Observable<T>;
+type O<T> = Obs<T>;
+
+type Comp<T> = Computed<T>;
+type C<T> = Comp<T>;
+
+export {
+  observable,
+  computed,
+  useValue,
+  useObservable,
+  useObs,
+  useO,
+  useComputed,
+  useComp,
+  useC,
+  ObservableClass,
+  ComputedClass,
+  observer,
+};
+export type { Observable, Obs, O, Computed, Comp, C };
