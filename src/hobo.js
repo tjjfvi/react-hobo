@@ -3,12 +3,12 @@
 type _OF<ForType, V:ForType> = V;
 type $ObjFilter<Obj, ForType>=$ObjMap<Obj, <V>(V)=>_OF<ForType, V> | empty>;
 
-type M<T> = $ObjMap<$Diff<T, {}>, <V>(V)=>Computed<V>> | empty;
+type M<T> = $ReadOnly<$ObjMap<$Diff<T, {}>, <V>(V)=>Computed<V>>> | empty;
 
 // eslint-disable-next-line no-unused-vars
 type _F<T, I, O, F:(o: Observable<T>, ...a:I)=>O> = (...a:I)=>O;
 type _Fs<T> = $ObjFilter<$Diff<T, {}>, (o: Observable<T>, ...a:Array<any>)=>any>;
-type Fs<T> = $ObjMap<_Fs<T>, <V>(V)=>_F<T, *, *, V> | empty>;
+type Fs<T> = $ReadOnly<$ObjMap<_Fs<T>, <V>(V)=>_F<T, *, *, V> | empty>>;
 
 import React from "react";
 import EventEmmiter from "events";
@@ -67,8 +67,16 @@ class ObservableClass<T> extends Function {
       return this._o;
     }
 
-    obs: M<T>;
-    fn: Fs<T>;
+    _obs: M<T>;
+    _fn: Fs<T>;
+
+    get obs(): M<T>{
+      return this._obs;
+    }
+
+    get fn(): Fs<T>{
+      return this._fn;
+    }
 
 }
 
@@ -101,6 +109,9 @@ class ComputedClass<T> extends ObservableClass<T> {
     return this._o;
   }
 
+    _obs: M<T>;
+    _fn: Fs<T>;
+
 }
 
 const observable = <T/**/>(val: T): Observable<T> => {
@@ -123,7 +134,7 @@ const observable = <T/**/>(val: T): Observable<T> => {
   o.val = val;
   o.ee = new EventEmmiter();
   o.ee.setMaxListeners(Infinity);
-  o.obs = ((new Proxy({}, {
+  o._obs = ((new Proxy({}, {
     get: (target, prop) => {
       if(target[prop])
         return target[prop];
@@ -133,7 +144,7 @@ const observable = <T/**/>(val: T): Observable<T> => {
       });
     }
   }): any): M<T>);
-  o.fn = ((new Proxy({}, {
+  o._fn = ((new Proxy({}, {
     get: (target, prop) => {
       if(!o.val[prop])
         return;
@@ -161,8 +172,8 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   }, ComputedClass.prototype);
   c._o = c;
   c.ee = o.ee;
-  c.obs = o.obs;
-  c.fn = o.fn;
+  c._obs = o._obs;
+  c._fn = o._fn;
   // $FlowFixMe
   Object.defineProperty(c, "val", {
     get(){
