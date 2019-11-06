@@ -67,6 +67,14 @@ class ObservableClass<T> extends Function {
       return this._o;
     }
 
+    to(v?: T): Observable<T>{
+      let old = this.val;
+      if(v !== undefined)
+        this.val = v;
+      this.ee.emit("change", this.val, old);
+      return this._o;
+    }
+
     _obs: M<T>;
     _fn: Fs<T>;
 
@@ -109,6 +117,11 @@ class ComputedClass<T> extends ObservableClass<T> {
     return this._o;
   }
 
+  to(v?: T): Computed<T>{
+    super.to(v);
+    return this._o;
+  }
+
     _obs: M<T>;
     _fn: Fs<T>;
 
@@ -140,7 +153,7 @@ const observable = <T/**/>(val: T): Observable<T> => {
         return target[prop];
       return target[prop] = computed(() => o()[prop], v => {
         o.val[prop] = v;
-        o.ee.emit("change", o.val, o.val);
+        o.to();
       });
     }
   }): any): M<T>);
