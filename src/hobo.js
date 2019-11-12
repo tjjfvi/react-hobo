@@ -151,7 +151,7 @@ const observable = <T/**/>(val: T): Observable<T> => {
     get: (target, prop) => {
       if(target[prop])
         return target[prop];
-      return target[prop] = computed(() => o()[prop], v => {
+      return target[prop] = computed(() => o()?.[prop], v => {
         o.val[prop] = v;
         o.to();
       });
