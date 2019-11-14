@@ -75,6 +75,11 @@ class ObservableClass<T> extends Function {
       return this._o;
     }
 
+    setPromise(p: Promise<T> | ()=>Promise<T>): Observable<T>{
+      (typeof p === "function" ? p() : p).then(v => this._o(v));
+      return this._o;
+    }
+
     _obs: M<T>;
     _fn: Fs<T>;
 
@@ -117,6 +122,11 @@ class ComputedClass<T> extends ObservableClass<T> {
     return this._o;
   }
 
+  setPromise(p: Promise<T> | ()=>Promise<T>): Computed<T>{
+    super.setPromise(p);
+    return this._o;
+  }
+
   to(v?: T): Computed<T>{
     super.to(v);
     return this._o;
@@ -127,7 +137,7 @@ class ComputedClass<T> extends ObservableClass<T> {
 
 }
 
-const observable = <T/**/>(val: T): Observable<T> => {
+const _o = <T/**/>(val: T): Observable<T> => {
   const f = v => {
     if(v !== undefined) {
       let old = o.val;
@@ -166,6 +176,17 @@ const observable = <T/**/>(val: T): Observable<T> => {
   }): any): Fs<T>);
   return o;
 }
+
+_o.fromPromise = <T/**/>(prom: Promise<T> | ()=>Promise<T>): Observable<?T> => {
+  type QT = ?T;
+  const o = _o<QT>(null);
+  o.setPromise(prom);
+  return o;
+}
+
+_o.fromProm = _o.fromPromise;
+
+const observable: (typeof _o) & { fromPromise: FP, fromProm: FP } = _o;
 
 const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
   const o = observable();
@@ -212,9 +233,13 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
 
 const useValue = <V/**/>(v: () => V): V => React.useState(v)[0];
 type UO = <T>(T) => Observable<T>;
-const useObservable: (UO & { use: UO }) = (() => {
+type FP = typeof observable.fromPromise;
+const useObservable: (UO & { use: UO, fromPromise: FP & { use: FP }, fromProm: FP & { use: FP } }) = (() => {
   let uo = <T/**/>(v: T): Observable<T> => useValue(() => observable(v));
   uo.use = <T/**/>(v: T): Observable<T> => uo<T>(v).use();
+  uo.fromPromise = <T/**/>(p: Promise<T> | ()=>Promise<T>) => useValue(() => observable.fromPromise(p));
+  uo.fromPromise.use = <T/**/>(p: Promise<T> | ()=>Promise<T>) => uo.fromPromise(p).use();
+  uo.fromProm = uo.fromPromise;
   return uo;
 })();
 type UC = <T>(f: () => T, wf?: T=>any) => Computed<T>;
