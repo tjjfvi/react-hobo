@@ -1,68 +1,68 @@
-/* @flow */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-type _OF<ForType, V:ForType> = V;
-type $ObjFilter<Obj, ForType>=$ObjMap<Obj, <V>(V)=>_OF<ForType, V> | empty>;
+type M<T> = { readonly [K in keyof T]: Computed<T[K]> };
+type Fs<T> = {
+  readonly [K in keyof T]: T extends ((o: Observable<T>, ...i: infer I) => infer O) ? (...a: I) => O : void
+};
 
-type M<T> = $ReadOnly<$ObjMap<$Diff<T, {}>, <V>(V)=>Computed<V>>> | empty;
-
-// eslint-disable-next-line no-unused-vars
-type _F<T, I, O, F:(o: Observable<T>, ...a:I)=>O> = (...a:I)=>O;
-type _Fs<T> = $ObjFilter<$Diff<T, {}>, (o: Observable<T>, ...a:Array<any>)=>any>;
-type Fs<T> = $ReadOnly<$ObjMap<_Fs<T>, <V>(V)=>_F<T, *, *, V> | empty>>;
 
 import React from "react";
-import EventEmmiter from "events";
+import { EventEmitter } from "tsee";
 
-let cur: ?Observable<any>;
+type EE<T> = EventEmitter<{ change: (cur: T, old: T) => void }>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cur: Computed<any> | null = null;
 
 type Observable<T> = ((val?: T) => T) & ObservableClass<T>
 type Computed<T> = ((val?: T) => T) & ComputedClass<T>
 
 class ObservableClass<T> extends Function {
 
-    _o: Observable<T>;
-    val: T;
-    ee: EventEmmiter;
+  _o: Observable<T>;
+  val: T;
+  ee: EE<T>;
 
-    addDep(o: Observable<T>){
-      return o;
+  addDep(o: Observable<T>){
+    o;
+  }
+
+  use(): Observable<T>{
+    let first = React.useRef(true);
+    let [, setState] = React.useState({});
+    let update = () => setState({});
+    if(first.current) {
+      this.ee.on("change", update);
+      first.current = false;
     }
+    React.useEffect(() => () => void this.ee.removeListener("change", update), [])
+    return this._o;
+  }
 
-    use(): Observable<T>{
-      let first = React.useRef(true);
-      let [, setState] = React.useState({});
-      let update = () => setState({});
-      if(first.current) {
-        this.ee.on("change", update);
-        first.current = false;
-      }
-      React.useEffect(() => () => void this.ee.removeListener("change", update), [])
-      return this._o;
-    }
+    toggle: (T extends boolean ? () => boolean : never) = ((): boolean =>
+      // @ts-ignore
+      this._o(!this._o())
+    ) as any;
 
-    toggle(): boolean{
-      // $FlowFixMe
-      return this._o(!this._o());
-    }
+    inc: (T extends number ? (amount?: number) => number : never) = ((n: any = 1) =>
+      // @ts-ignore
+      this._o(this._o() + n)
+    ) as any;
 
-    inc(amount: number = 1): number{
-      if(typeof this._o() !== "number")
-        throw new Error("Not a number");
-      // $FlowFixMe
-      return this._o(this._o() + amount);
-    }
 
-    dec(amount: number = 1): number{
-      return this.inc(-amount);
-    }
+    dec: (T extends number ? (amount?: number) => number : never) = ((n: any = 1) =>
+      // @ts-ignore
+      this._o(this._o() - n)
+    ) as any;
 
-    tap(f: T=>any): Observable<T>{
+    tap(f: (x: T) => any): Observable<T>{
       f(this.val);
       return this._o;
     }
 
-    inn(f: $NonMaybeType<T>=>any): Observable<T>{
+    inn(f: (x: NonNullable<T>) => any): Observable<T>{
       if(this.val != null)
+        // @ts-ignore
         f(this.val);
       return this._o;
     }
@@ -75,21 +75,21 @@ class ObservableClass<T> extends Function {
       return this._o;
     }
 
-    setPromise(p: Promise<T> | ()=>Promise<T>): Observable<T>{
+    setPromise(p: Promise<T> | (() => Promise<T>)): Observable<T>{
       (typeof p === "function" ? p() : p).then(v => this._o(v));
       return this._o;
     }
 
-    _obs: M<T>;
-    _fn: Fs<T>;
+  _obs: M<T>;
+  _fn: Fs<T>;
 
-    get obs(): M<T>{
-      return this._obs;
-    }
+  get obs(){
+    return this._obs;
+  }
 
-    get fn(): Fs<T>{
-      return this._fn;
-    }
+  get fn(){
+    return this._fn;
+  }
 
 }
 
@@ -112,17 +112,17 @@ class ComputedClass<T> extends ObservableClass<T> {
     return this._o;
   }
 
-  tap(f: T=>any): Computed<T>{
+  tap(f: (x: T) => any): Computed<T>{
     super.tap(f);
     return this._o;
   }
 
-  inn(f: T=>any): Computed<T>{
+  inn(f: (x: NonNullable<T>) => any): Computed<T>{
     super.inn(f);
     return this._o;
   }
 
-  setPromise(p: Promise<T> | ()=>Promise<T>): Computed<T>{
+  setPromise(p: Promise<T> | (() => Promise<T>)): Computed<T>{
     super.setPromise(p);
     return this._o;
   }
@@ -132,13 +132,13 @@ class ComputedClass<T> extends ObservableClass<T> {
     return this._o;
   }
 
-    _obs: M<T>;
-    _fn: Fs<T>;
+  _obs: M<T>;
+  _fn: Fs<T>;
 
 }
 
 const _o = <T/**/>(val: T): Observable<T> => {
-  const f = v => {
+  const f = (v: T|void) => {
     if(v !== undefined) {
       let old = o.val;
       if(old === v)
@@ -151,11 +151,10 @@ const _o = <T/**/>(val: T): Observable<T> => {
       return o.val;
     }
   };
-  // $FlowFixMe
   const o: Observable<T> = Object.setPrototypeOf(f, ObservableClass.prototype);
   o._o = o;
   o.val = val;
-  o.ee = new EventEmmiter();
+  o.ee = new EventEmitter();
   o.ee.setMaxListeners(Infinity);
   o._obs = ((new Proxy({}, {
     get: (target, prop) => {
@@ -166,32 +165,30 @@ const _o = <T/**/>(val: T): Observable<T> => {
         o.to();
       });
     }
-  }): any): M<T>);
+  }) as any) as M<T>);
   o._fn = ((new Proxy({}, {
     get: (target, prop) => {
       if(!o.val[prop])
         return;
       return (f => (...a) => f(o, ...a))(o.val[prop]);
     }
-  }): any): Fs<T>);
+  }) as any) as Fs<T>);
   return o;
 }
 
-_o.fromPromise = <T/**/>(prom: Promise<T> | ()=>Promise<T>): Observable<?T> => {
-  type QT = ?T;
-  const o = _o<QT>(null);
+const ofp = <T>(prom: Promise<T> | (() => Promise<T>)): Observable<T|null> => {
+  const o = _o<T|null>(null);
   o.setPromise(prom);
   return o;
 }
 
-_o.fromProm = _o.fromPromise;
+_o.fromPromise = _o.fromProm = ofp;
 
-const observable: (typeof _o) & { fromPromise: FP, fromProm: FP } = _o;
+const observable: (typeof _o) & { fromPromise: FP; fromProm: FP } = _o;
 
-const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
-  const o = observable();
-  // $FlowFixMe
-  const c: Computed<T> = Object.setPrototypeOf(val => {
+const computed = <T>(func: (() => T), writeFunc?: ((x: T) => any)) => {
+  let o: Observable<T>;
+  const c: Computed<T> = Object.setPrototypeOf((val?: T) => {
     if(val !== undefined) {
       if(!writeFunc)
         throw new Error("Not a writeable computed");
@@ -205,10 +202,6 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
     }
   }, ComputedClass.prototype);
   c._o = c;
-  c.ee = o.ee;
-  c._obs = o._obs;
-  c._fn = o._fn;
-  // $FlowFixMe
   Object.defineProperty(c, "val", {
     get(){
       return o.val;
@@ -225,6 +218,10 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
     cur = c;
     let v = func();
     cur = oldCur;
+    o = o || observable<T>(v);
+    c.ee = o.ee;
+    c._obs = o._obs;
+    c._fn = o._fn;
     o(v);
   }
   c.update();
@@ -232,30 +229,35 @@ const computed = <T/**/>(func: () => T, writeFunc?: T => any) => {
 }
 
 const useValue = <V/**/>(v: () => V): V => React.useState(v)[0];
-type UO = <T>(T) => Observable<T>;
-type FP = typeof observable.fromPromise;
-const useObservable: (UO & { use: UO, fromPromise: FP & { use: FP }, fromProm: FP & { use: FP } }) = (() => {
-  let uo = <T/**/>(v: T): Observable<T> => useValue(() => observable(v));
-  uo.use = <T/**/>(v: T): Observable<T> => uo<T>(v).use();
-  uo.fromPromise = <T/**/>(p: Promise<T> | ()=>Promise<T>) => useValue(() => observable.fromPromise(p));
-  uo.fromPromise.use = <T/**/>(p: Promise<T> | ()=>Promise<T>) => uo.fromPromise(p).use();
-  uo.fromProm = uo.fromPromise;
+type UO = <T>(x: T) => Observable<T>;
+type FP = typeof ofp;
+const useObservable: (UO & { use: UO; fromPromise: FP & { use: FP }; fromProm: FP & { use: FP } }) = (() => {
+  let fp = Object.assign(
+    <T>(p: Promise<T> | (() => Promise<T>)) => useValue(() => observable.fromPromise(p)),
+    { use: (<T>(p: Promise<T> | (() => Promise<T>)) => fp(p).use()) as FP }
+  );
+  let uo = Object.assign(
+    <T>(v: T): Observable<T> => useValue(() => observable(v)),
+    {
+      use: <T>(v: T): Observable<T> => uo<T>(v).use(),
+      fromPromise: fp,
+      fromProm: fp,
+    }
+  );
   return uo;
 })();
-type UC = <T>(f: () => T, wf?: T=>any) => Computed<T>;
-const useComputed: (UC & { use: UC }) = (() => {
-  let uc = <T/**/>(f: ()=>T, wf?: T=>any): Computed<T> => useValue(() => computed(f, wf));
-  uc.use = <T/**/>(f: ()=>T, wf?: T=>any): Computed<T> => uc<T>(f, wf).use();
-  return uc;
-})();
-
-const observer = <I, O=*>(component: (I=>O)): (I=>O) => (input: I): O => {
+type UC = <T>(f: () => T, wf?: (x: T) => any) => Computed<T>;
+const useComputed: (UC & { use: UC }) = Object.assign(
+ <T/**/>(f: (() => T), wf?: ((x: T) => any)): Computed<T> => useValue(() => computed(f, wf)),
+ { use: <T/**/>(f: () => T, wf?: ((x: T) => any)): Computed<T> => useComputed<T>(f, wf).use() }
+);
+const observer = <I, O>(component: ((i: I) => O)): ((i: I) => O) => (i: I): O => {
   let c = useComputed(() => NaN).use();
   c.deps.forEach(O => O.ee.removeListener("change", c.update));
   c.deps = new Set();
   let oldCur = cur;
   cur = c;
-  let result = component(input);
+  let result = component(i);
   cur = oldCur;
   return result;
 };
@@ -295,5 +297,10 @@ export {
   ObservableClass,
   ComputedClass,
   observer,
+  Observable,
+  Obs,
+  O,
+  Computed,
+  Comp,
+  C
 };
-export type { Observable, Obs, O, Computed, Comp, C };
