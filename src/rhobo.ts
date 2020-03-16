@@ -152,6 +152,7 @@ const _o = <T/**/>(val: T): Observable<T> => {
     }
   };
   const o: Observable<T> = Object.setPrototypeOf(f, ObservableClass.prototype);
+  Object.assign(o, new ObservableClass())
   o._o = o;
   o.val = val;
   o.ee = new EventEmitter();
@@ -202,6 +203,7 @@ const computed = <T>(func: (() => T), writeFunc?: ((x: T) => any)) => {
     }
   }, ComputedClass.prototype);
   c._o = c;
+  Object.assign(c, new ComputedClass())
   Object.defineProperty(c, "val", {
     get(){
       return o.val;
