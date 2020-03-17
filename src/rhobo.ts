@@ -39,21 +39,21 @@ class ObservableClass<T> extends Function {
     return this._o;
   }
 
-    toggle: (T extends boolean ? () => boolean : never) = ((): boolean =>
+    toggle: (T extends boolean ? () => boolean : never) = (function(): boolean{
       // @ts-ignore
-      this._o(!this._o())
-    ) as any;
+      return this._o(!this._o())
+    }) as any;
 
-    inc: (T extends number ? (amount?: number) => number : never) = ((n: any = 1) =>
+    inc: (T extends number ? (amount?: number) => number : never) = (function(n: any = 1){
       // @ts-ignore
-      this._o(this._o() + n)
-    ) as any;
+      return this._o(this._o() + n)
+    }) as any;
 
 
-    dec: (T extends number ? (amount?: number) => number : never) = ((n: any = 1) =>
+    dec: (T extends number ? (amount?: number) => number : never) = (function(n: any = 1){
       // @ts-ignore
-      this._o(this._o() - n)
-    ) as any;
+      return this._o(this._o() - n)
+    }) as any;
 
     tap(f: (x: T) => any): Observable<T>{
       f(this.val);
@@ -152,7 +152,9 @@ const _o = <T/**/>(val: T): Observable<T> => {
     }
   };
   const o: Observable<T> = Object.setPrototypeOf(f, ObservableClass.prototype);
-  Object.assign(o, new ObservableClass())
+  const _O = new ObservableClass();
+  // @ts-ignore
+  o.toggle = _O.toggle.bind(o); o.inc = _O.inc.bind(o); o.dec = _O.dec.bind(o);
   o._o = o;
   o.val = val;
   o.ee = new EventEmitter();
@@ -203,7 +205,9 @@ const computed = <T>(func: (() => T), writeFunc?: ((x: T) => any)) => {
     }
   }, ComputedClass.prototype);
   c._o = c;
-  Object.assign(c, new ComputedClass())
+  const _C = new ComputedClass();
+  // @ts-ignore
+  c.toggle = _C.toggle.bind(o); c.inc = _C.inc.bind(o); c.dec = _C.dec.bind(o);
   Object.defineProperty(c, "val", {
     get(){
       return o.val;
