@@ -39,46 +39,46 @@ class ObservableClass<T> extends Function {
     return this._o;
   }
 
-    toggle: (T extends boolean ? () => boolean : never) = (function(): boolean{
-      // @ts-ignore
-      return this._o(!this._o())
-    }) as any;
+  toggle(): boolean{
+    // @ts-ignore
+    return this._o(!this._o());
+  }
 
-    inc: (T extends number ? (amount?: number) => number : never) = (function(n: any = 1){
-      // @ts-ignore
-      return this._o(this._o() + n)
-    }) as any;
+  inc(amount = 1): number{
+    if(typeof this._o() !== "number")
+      throw new Error("Not a number");
+    // @ts-ignore
+    return this._o(this._o() + amount);
+  }
 
+  dec(amount = 1): number{
+    return this.inc(-amount);
+  }
 
-    dec: (T extends number ? (amount?: number) => number : never) = (function(n: any = 1){
-      // @ts-ignore
-      return this._o(this._o() - n)
-    }) as any;
+  tap(f: (x: T) => any): Observable<T>{
+    f(this.val);
+    return this._o;
+  }
 
-    tap(f: (x: T) => any): Observable<T>{
-      f(this.val);
-      return this._o;
-    }
-
-    inn(f: (x: NonNullable<T>) => any): Observable<T>{
-      if(this.val != null)
+  inn(f: (x: NonNullable<T>) => any): Observable<T>{
+    if(this.val != null)
         // @ts-ignore
-        f(this.val);
-      return this._o;
-    }
+      f(this.val);
+    return this._o;
+  }
 
-    to(v?: T): Observable<T>{
-      let old = this.val;
-      if(v !== undefined)
-        this.val = v;
-      this.ee.emit("change", this.val, old);
-      return this._o;
-    }
+  to(v?: T): Observable<T>{
+    let old = this.val;
+    if(v !== undefined)
+      this.val = v;
+    this.ee.emit("change", this.val, old);
+    return this._o;
+  }
 
-    setPromise(p: Promise<T> | (() => Promise<T>)): Observable<T>{
-      (typeof p === "function" ? p() : p).then(v => this._o(v));
-      return this._o;
-    }
+  setPromise(p: Promise<T> | (() => Promise<T>)): Observable<T>{
+    (typeof p === "function" ? p() : p).then(v => this._o(v));
+    return this._o;
+  }
 
   _obs: M<T>;
   _fn: Fs<T>;
@@ -152,9 +152,6 @@ const _o = <T/**/>(val: T): Observable<T> => {
     }
   };
   const o: Observable<T> = Object.setPrototypeOf(f, ObservableClass.prototype);
-  const _O = new ObservableClass();
-  // @ts-ignore
-  o.toggle = _O.toggle.bind(o); o.inc = _O.inc.bind(o); o.dec = _O.dec.bind(o);
   o._o = o;
   o.val = val;
   o.ee = new EventEmitter();
@@ -205,9 +202,6 @@ const computed = <T>(func: (() => T), writeFunc?: ((x: T) => any)) => {
     }
   }, ComputedClass.prototype);
   c._o = c;
-  const _C = new ComputedClass();
-  // @ts-ignore
-  c.toggle = _C.toggle.bind(o); c.inc = _C.inc.bind(o); c.dec = _C.dec.bind(o);
   Object.defineProperty(c, "val", {
     get(){
       return o.val;
