@@ -2,7 +2,6 @@
 import { Readable } from "./readable";
 import { use_ } from "./use_";
 
-// @ts-ignore
 export interface Writeable<T> {
   (val: T): T;
 }
@@ -35,7 +34,6 @@ export class Writeable<T> extends Readable<T> {
 
   private _obsW: ObsW<T>;
 
-  // @ts-ignore
   get obs(){
     return this._obsW = this._obsW || new Proxy({}, {
       // @ts-ignore

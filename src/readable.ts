@@ -21,10 +21,6 @@ type Obs<T> = {
   readonly [K in keyof T]: Readable<T[K]>;
 }
 
-type Fn<t extends Readable<T>, T> = {
-  readonly [K in keyof T]: T[K] extends ((o: t, ...i: infer I) => infer O) ? (...a: I) => O : void
-};
-
 export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
 
   value: T;
@@ -156,14 +152,6 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
       // @ts-ignore
       get: (t, k) => k in t ? t[k] : t[k] = new Readable(() => this.get()?.[k])
     }) as unknown as Obs<T>;
-  }
-
-  private _fn: Fn<this, T>;
-
-  get fn(){
-    return this._fn = this._fn || new Proxy({}, {
-      get: (t, k) => k in t ? t[k] : t[k] = (...a: unknown[]) => this.value[k](this, ...a),
-    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
