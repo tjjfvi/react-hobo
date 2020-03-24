@@ -1,9 +1,9 @@
 {
   "author": "T6 <t6@t6.fyi> (https://t6.fyi/)",
   "name": "rhobo",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "",
     "prepack": "tsc",
