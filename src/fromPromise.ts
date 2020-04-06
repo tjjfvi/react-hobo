@@ -1,7 +1,7 @@
 import { Readable } from "./readable";
 import { use_ } from "./use_";
 
-class FromPromise<T, I=null> extends Readable<I | T> {
+class FromPromise<T, I=null> extends Readable<I | T> implements Omit<Promise<T>, typeof Symbol.toStringTag> {
 
   prom: Promise<T>;
 
@@ -10,11 +10,18 @@ class FromPromise<T, I=null> extends Readable<I | T> {
     super(() => fv ? this.value : initialValue);
     fv = true;
     this.prom = prom;
+    this.then = prom.then.bind(prom);
+    this.catch = prom.catch.bind(prom);
+    this.finally = prom.finally.bind(prom);
     prom.then(v => {
       this.value = v;
       Readable.update(this);
     });
   }
+
+  then: Promise<T>["then"];
+  catch: Promise<T>["catch"];
+  finally: Promise<T>["finally"];
 
 }
 
