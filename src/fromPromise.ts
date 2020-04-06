@@ -20,8 +20,10 @@ class FromPromise<T, I=null> extends Readable<I | T> {
 
 export function fromPromise<T>(prom: Promise<T>): FromPromise<T>
 export function fromPromise<T, I>(prom: Promise<T>, initialValue: I): FromPromise<T, I>
-export function fromPromise<T, I>(prom: Promise<T>, initialValue: I | null = null){
-  return new FromPromise(prom, initialValue);
+export function fromPromise<T, I>(prom: () => Promise<T>): FromPromise<T>
+export function fromPromise<T, I>(prom: () => Promise<T>, initialValue: I): FromPromise<T, I>
+export function fromPromise<T, I>(prom: Promise<T> | (() => Promise<T>), initialValue: I | null = null){
+  return new FromPromise(typeof prom === "function" ? prom() : prom, initialValue);
 }
 
 export const fromProm = fromPromise;
