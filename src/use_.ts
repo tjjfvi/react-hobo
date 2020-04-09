@@ -7,7 +7,7 @@ type use_<F> = F & { use: F; preserve: F & { use: F } };
 export const use_ = <F extends (...a: unknown[]) => Readable<unknown>>(f: F): use_<F> => {
   let core = (clear: boolean) => (...a: unknown[]) => {
     let r = useValue(() => f(...a));
-    if(clear) useEffect(() => {
+    if(clear) useEffect(() => () => {
       r.kill();
     }, []);
     return r;
