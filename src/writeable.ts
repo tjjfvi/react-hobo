@@ -19,9 +19,9 @@ export class Writeable<T> extends Readable<T> {
     this.setFunc = set;
   }
 
-  set(value: T){
+  set = (value: T) => {
     if(!this.alive)
-      throw new Error("called .set on dead writeable");
+      throw new Error("Called .set on dead writeable");
     this.setFunc(value);
     return value;
   }

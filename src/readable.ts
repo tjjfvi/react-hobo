@@ -98,7 +98,7 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
     for(let _ of r.update()) _;
   }
 
-  get(){
+  get = () => {
     if(!this.alive)
       throw new Error("Called .get on dead Readable");
     if(cur)
