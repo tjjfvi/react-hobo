@@ -38,7 +38,10 @@ export class Writeable<T> extends Readable<T> {
     return this._obsW = this._obsW || new Proxy({}, {
       // @ts-ignore
       get: (t, k) => k in t ? t[k] : t[k] =
-        new Writeable(() => this.get()?.[k], v => this.set(Object.assign(this.value, { [k]: v })))
+        new Writeable(() => this.get()?.[k], v => {
+          this.value[k] = v;
+          Readable.update(t[k]);
+        })
     }) as unknown as ObsW<T>;
   }
 
