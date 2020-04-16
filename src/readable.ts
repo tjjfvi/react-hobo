@@ -25,6 +25,7 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
 
   value: T;
   alive = true;
+  symb: symbol;
 
   private func: () => T;
   private deps = new Set<_R>();
@@ -84,6 +85,7 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
     let lastCur = cur;
     cur = this;
     this.value = this.func();
+    this.symb = Symbol();
     cur = lastCur;
     this.emit("update");
 
@@ -122,14 +124,21 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
   }
 
   use(){
-    let first = React.useRef(true);
-    let [, setState] = React.useState({});
-    let update = () => setState({});
-    if(first.current) {
-      this.on("update", update);
-      first.current = false;
-    }
-    React.useEffect(() => () => void this.removeListener("update", update), [])
+    const [, setState] = React.useState({});
+    const lastSymb = React.useRef(this.symb);
+    lastSymb.current = this.symb;
+
+    const handler = () => {
+      if(lastSymb.current !== this.symb)
+        setState({});
+    };
+
+    React.useEffect(() => {
+      this.on("update", handler);
+      return () =>
+        void this.removeListener("update", handler);
+    }, [])
+
     return this;
   }
 
