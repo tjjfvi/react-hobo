@@ -56,48 +56,61 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
     this.dependents.delete(readable);
   }
 
-  private* update(tbu = new MultiSet<_R>(), uip: ReadonlySet<_R> = new Set()){
+  private update(tbu = new MultiSet<_R>(), uip: ReadonlySet<_R> = new Set()){
     if(!this.alive)
       throw new Error("Called .update on dead Readable");
 
-    if(uip.has(this))
-      return console.warn("Circular dependency; using old value")
+    if(uip.has(this)) {
+      console.warn("Circular dependency; using old value")
+      return {
+        readable: this,
+        register: () => void 0,
+        update: () => void 0,
+      }
+    }
 
     let uip2 = new Set(uip);
     uip2.add(this);
 
-    for(let dependent of this.dependents)
-      tbu.add(dependent);
-
     let { dependents } = this;
 
-    let gens = new Set(function *(){
+    let subs = new Set(function *(){
       for(let dependent of new Set(dependents))
-        yield { g: dependent.update(tbu, uip2), d: dependent };
+        yield dependent.update(tbu, uip2);
     }());
 
-    for(let gen of gens)
-      gen.g.next();
+    return {
+      readable: this,
+      register: () => {
+        for(let dependent of this.dependents)
+          tbu.add(dependent);
 
-    yield;
+        for(let sub of subs)
+          if(tbu.has(sub.readable) === 1)
+            sub.register();
+      },
+      update: () => {
+        this.clearDeps();
+        let lastCur = cur;
+        cur = this;
+        this.value = this.func();
+        this.symb = Symbol();
+        cur = lastCur;
+        this.emit("update");
 
-    this.clearDeps();
-    let lastCur = cur;
-    cur = this;
-    this.value = this.func();
-    this.symb = Symbol();
-    cur = lastCur;
-    this.emit("update");
-
-    for(let gen of new Set(gens)) {
-      tbu.remove(gen.d)
-      if(!tbu.has(gen.d))
-        gen.g.next();
+        for(let sub of new Set(subs)) {
+          tbu.remove(sub.readable)
+          if(!tbu.has(sub.readable))
+            sub.update();
+        }
+      }
     }
   }
 
   static update(r: _R){
-    for(let _ of r.update()) _;
+    let obj = r.update();
+    obj.register();
+    obj.update();
   }
 
   get = () => {
