@@ -82,11 +82,10 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
     return {
       readable: this,
       register: () => {
-        for(let dependent of this.dependents)
-          tbu.add(dependent);
+        tbu.add(this);
 
-        for(let sub of subs)
-          if(tbu.has(sub.readable) === 1)
+        if(tbu.has(this) === 1)
+          for(let sub of subs)
             sub.register();
       },
       update: () => {
