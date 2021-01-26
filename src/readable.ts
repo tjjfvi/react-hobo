@@ -142,7 +142,7 @@ export class Readable<T> extends Callable<typeof EE>(EventEmitter) {
 
     const handler = () => {
       if(lastSymb.current !== this.symb)
-        setState({});
+        setTimeout(() => setState({}), 0);
     };
 
     React.useEffect(() => {
